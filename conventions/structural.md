@@ -43,6 +43,12 @@ Exception: Inherently sequential algorithms or state machines
 Severity: SHOULD
 </default-conventions>
 
+<default-conventions domain="premature-abstraction">
+**Premature Abstraction (KISS)**: Layers, configuration knobs, parameters, hooks, or interfaces added for hypothetical future needs; abstracting a pattern at its first use; a parallel pattern where an existing one would serve. Prefer the simplest implementation that solves today's problem — three similar lines beat a speculative abstraction; keep state local until sharing is required; match existing codebase patterns over introducing new ones. Not a license to skip correctness or readability.
+Severity: SHOULD
+Exception: A concretely-planned near-term call site, or a framework boundary that requires the seam upfront.
+</default-conventions>
+
 <default-conventions domain="dead-code">
 **Dead Code**: No callers, impossible branches, unread variables, unused imports
 Severity: COULD
