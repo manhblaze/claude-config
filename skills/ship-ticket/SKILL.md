@@ -11,6 +11,8 @@ Take ONE Jira ticket and fan it out across the repos it touches — a git worktr
 
 This is the per-session worker. The later orchestrator (Step 3 in the roadmap) reuses the same `agent-tasks` records, pulled by a scheduler instead of started by a human.
 
+**Pipeline role:** this skill executes the **Implementation phase** of the [pipeline](../pipeline/PIPELINE.md). Its precondition is the ticket **spec** authored in Planning (`.claude/specs/<TICKET>-<slug>.md`) — for cross-repo tickets the spec's **frozen wire-contract section** is what keeps the parallel worktrees coherent. The **trivial fast-lane** (one-repo; no persistence / projection / wire-enum / auth / public-API / event-bus touch) skips the spec file (one-paragraph inline spec in the ticket) but still runs the security trigger-scan and, for any change feeding field-dependent logic over a persisted model, a real-datastore integration assertion.
+
 ## Inputs
 
 - `TICKET` — Jira key, e.g. `MAV-3700`. Required.
@@ -39,8 +41,9 @@ Default impl = `agent-tasks` MCP; dry-run / daemon-down = log the calls to `trac
 ### 3. Fan out (Workflow — `fanout.js`)
 Invoke `Workflow({ scriptPath: ".../ship-ticket/fanout.js" })` with
 `args = { ticket, type, mode, intent, contract?, repos:[{name, path}] }`.
-- Cross-repo ticket → **pin the wire contract first** (FE mirrors BE wire shape) before the per-repo agents run in parallel.
+- Cross-repo ticket → the wire contract is **already pinned in the spec** (Planning phase); read it from `.claude/specs/<TICKET>-<slug>.md` as the precondition before the per-repo agents run in parallel. (Trivial fast-lane only: no spec file → pin it inline in the Jira ticket first.)
 - Per repo: dry-run = a PLAN (files, approach, exact gate command, risks); live = implement in the worktree → run the repo's gate → `code-reviewer` subagent → fix findings.
+- Tests are written **with** the code and each references its **acceptance-criterion id** from the spec; a criterion with no green test is an incomplete implementation (`code-reviewer` MUST-block). Integration tests run against the real datastore (a mocked datastore is a reject for data-shape-dependent logic).
 - Each milestone → `applyTransition` on the `work_item` with an artifact (dry-run prints it).
 
 ### 4. PRs + Jira (live only)
